@@ -7,30 +7,21 @@ const TwoWheels = require('./TwoWheels');
 const board = new Board({ repl: false });
 const log = new SimpleLog(logLevels.trace);
 
-const driveLoopMilliseconds = 100;
-
-let isRunning = false;
-let isExiting = false;
-let driveLoopCount = 0;
-let lastKeypress;
+let wheels;
 
 board.on('ready', () => {
   try {
     log.trace('on board ready');
     
-    const wheels = new TwoWheels(9, 3, log);
+    wheels = new TwoWheels(9, 3, log);
 
-    board.on('exit', async () => {
-      console.log('\n');
-      log.trace('on board exit');
-      await cleanup(wheels);
-    });
+    registerBoardEventHandlers();
 
-    log.trace('board exit handler registered');
+    const keyPressHandlers = [
+      createDriveKeyPressHandler(),
+    ];
 
-    monitorKeystrokes(log);
-
-    startDriveLoop(board, wheels, log);
+    monitorKeyPressEvents(keyPressHandlers);
 
     log.trace('after board.wait');
   } catch (error) {
@@ -39,16 +30,33 @@ board.on('ready', () => {
   }
 });
 
-const monitorKeystrokes = (log) => {
+const registerBoardEventHandlers = () => {
+  board.on('exit', () => {
+    log.trace('on board exit');
+    cleanup(wheels);
+  });
+
+  log.trace('board exit handler registered');
+
+  board.on('error', (err) => {
+    log.error(JSON.stringify(err));
+  });
+
+  log.trace('board error handler registered');
+};
+
+const monitorKeyPressEvents = (handlers) => {
   keypress(process.stdin);
 
-  process.stdin.on('keypress', (ch, key) => {
-    log.trace(`got keypress ${ch}`);
-
-    lastKeypress = ch;
-
-    if (key && key.ctrl && key.name == 'c') {
+  process.stdin.on('keypress', (character, key) => {
+    if (key && key.ctrl && key.name === 'c') {
+      log.trace(`got keypress ^c`);
       process.kill(process.pid, 'SIGINT');
+    } else {
+      log.trace(`got key press ${character}`);
+      handlers.forEach(handler => {
+        handler(character, key);
+      });
     }
   });
 
@@ -56,59 +64,31 @@ const monitorKeystrokes = (log) => {
   process.stdin.resume();
 }
 
-const cleanup = async (wheels) => {
-  log.trace('starting cleanup...');
+const createDriveKeyPressHandler = () => {
+  return (character, key) => {
 
-  isExiting = true;
+    log.trace(`drive handler received '${character}'`);
+
+    if (character === 'w') {
+      wheels.forward();
+    } else if (character === 'a') {
+      wheels.spinLeft();
+    } else if (character === 's') {
+      wheels.back();    
+    } else if (character === 'd') {
+      wheels.spinRight();
+    } else if (character === ' ') {
+      wheels.stop();
+    }
+  };
+}
+
+const cleanup = (wheels) => {
+  log.trace('starting cleanup...');
 
   if (wheels) {
     wheels.stop();
   }
 
-  // wait for eval loop to stop?
   log.trace('cleanup finished');
-};
-
-const startDriveLoop = (board, wheels, log) => {
-  log.trace('starting drive loop...');
-  isRunning = true;
-  evalDriveCycle(board, wheels, log);
-  log.trace('drive loop started');
-};
-
-const evalDriveCycle = (board, wheels, log) => {
-  if (isExiting) {
-    log.trace('exiting drive loop');
-    isRunning = false;
-    return;
-  }
-  
-  if (driveLoopCount % 50 == 0) {
-    log.trace(`starting drive loop ${driveLoopCount}...`);
-  }
-
-  // todo:  change from a loop to an event handler
-  if (lastKeypress === 'w') {
-    wheels.forward();
-  } else if (lastKeypress === 'a') {
-    wheels.spinLeft();
-  } else if (lastKeypress === 's') {
-    wheels.back();    
-  } else if (lastKeypress === 'd') {
-    wheels.spinRight();
-  } else if (lastKeypress === ' ') {
-    wheels.stop();
-  }
-
-  lastKeypress = '';
-
-  board.wait(driveLoopMilliseconds, () => {
-    evalDriveCycle(board, wheels, log);
-  });
-
-  if (driveLoopCount % 50 == 0) {
-    log.trace(`drive loop ${driveLoopCount} completed`);
-  }
-
-  driveLoopCount++;
 };
