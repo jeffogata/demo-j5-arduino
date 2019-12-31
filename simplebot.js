@@ -79,6 +79,12 @@ const createDriveKeyPressHandler = () => {
       wheels.spinRight();
     } else if (character === ' ') {
       wheels.stop();
+    } else if (character >= '0' && character <= '9') {
+      let speed = parseInt(character) / 10;
+      if (speed === 0) {
+        speed = 1;
+      }
+      wheels.setSpeed(speed);
     }
   };
 }
