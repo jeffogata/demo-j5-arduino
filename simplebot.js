@@ -13,7 +13,7 @@ board.on('ready', () => {
   try {
     log.trace('on board ready');
     
-    wheels = new TwoWheels(9, 3, log);
+    wheels = new TwoWheels(9, 3, 0.2, log);
 
     registerBoardEventHandlers();
 

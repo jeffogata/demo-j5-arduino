@@ -9,9 +9,9 @@ const move = Object.freeze({
 });
 
 module.exports = class TwoWheels {
-  constructor(leftWheelPin, rightWheelPin, log) {
+  constructor(leftWheelPin, rightWheelPin, initialSpeed, log) {
     this.log = log;
-    this.speed = 1;
+    this.setSpeed(initialSpeed);
     this.both = createWheels(leftWheelPin, rightWheelPin, this.log);
     this.left = this.both[0];
     this.right = this.both[1];
@@ -38,13 +38,13 @@ module.exports = class TwoWheels {
   }
 
   forward() {
-    this.both.ccw(this.speed);
+    this.both.cw(this.speed);
     this.currentMove = move.forward;
     this.log.info(`wheels forward at speed ${this.speed}`);
   }
 
   back() {
-    this.both.cw(this.speed);
+    this.both.ccw(this.speed);
     this.currentMove = move.back;
     this.log.info(`wheels back at speed ${this.speed}`);
   }
