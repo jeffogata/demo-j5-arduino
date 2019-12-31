@@ -14,7 +14,7 @@ module.exports = class TwoWheels {
   }
 
   forward() {
-    this.both.ccw(0.5);
+    this.both.ccw();
     this.log.info('wheels forward');
   }
 
@@ -23,13 +23,13 @@ module.exports = class TwoWheels {
     this.log.info('wheels back');
   }
 
-  left() {
+  spinLeft() {
     this.left.ccw();
     this.right.cw();
     this.log.info('wheels left');
   }
 
-  right() {
+  spinRight() {
     this.left.cw();
     this.right.ccw();
     this.log.info('wheels right');
