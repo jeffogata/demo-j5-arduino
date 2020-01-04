@@ -1,4 +1,4 @@
-const { Board } = require('johnny-five');
+const { Board, Led } = require('johnny-five');
 const { logLevels } = require('./SimpleLogLevels');
 const keypress = require('keypress');
 const SimpleLog = require('./SimpleLog');
@@ -8,12 +8,16 @@ const board = new Board({ repl: false });
 const log = new SimpleLog(logLevels.trace);
 
 let wheels;
+let led;
 
 board.on('ready', () => {
   try {
     log.trace('on board ready');
     
     wheels = new TwoWheels(9, 3, 0.2, log);
+    led = new Led(11);
+
+    setLight(led, false);
 
     registerBoardEventHandlers();
 
@@ -33,7 +37,7 @@ board.on('ready', () => {
 const registerBoardEventHandlers = () => {
   board.on('exit', () => {
     log.trace('on board exit');
-    cleanup(wheels);
+    cleanup(wheels, led);
   });
 
   log.trace('board exit handler registered');
@@ -86,15 +90,30 @@ const createDriveKeyPressHandler = () => {
       }
       wheels.setSpeed(speed);
     }
+
+    setLight(led, wheels.areMoving);
   };
 }
 
-const cleanup = (wheels) => {
+const setLight = (led, isMoving) => {
+  if (isMoving) {
+    led.stop().off();
+    led.on();
+    log.trace('LED set to moving');
+  } else {
+    led.pulse(800);
+    log.trace('LED set to stopped');
+  }
+}
+
+const cleanup = (wheels, led) => {
   log.trace('starting cleanup...');
 
   if (wheels) {
     wheels.stop();
   }
+
+  led.stop().off();
 
   log.trace('cleanup finished');
 };

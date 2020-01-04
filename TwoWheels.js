@@ -1,12 +1,10 @@
 const { Servo, Servos } = require('johnny-five');
 
-const move = Object.freeze({
-  stop: 0,
-  forward: 1,
-  back: 2,
-  spinLeft: 3,
-  spinRight: 4
-});
+const STOP = 0;
+const FORWARD = 1;
+const BACK = 2;
+const SPIN_LEFT = 3;
+const SPIN_RIGHT = 4;
 
 module.exports = class TwoWheels {
   constructor(leftWheelPin, rightWheelPin, initialSpeed, log) {
@@ -15,7 +13,8 @@ module.exports = class TwoWheels {
     this.both = createWheels(leftWheelPin, rightWheelPin, this.log);
     this.left = this.both[0];
     this.right = this.both[1];
-    this.currentMove = move.stop;
+    this.currentMove = STOP;
+    this.areMoving = false;
   }
 
   setSpeed(speed) {
@@ -33,43 +32,40 @@ module.exports = class TwoWheels {
 
   stop() {
     this.both.stop();
-    this.currentMove = move.stop;
+    this.currentMove = STOP;
+    this.areMoving = false;
     this.log.info('wheels stop');
   }
 
   forward() {
     this.both.cw(this.speed);
-    this.currentMove = move.forward;
+    this.currentMove = FORWARD;
+    this.areMoving = true;
     this.log.info(`wheels forward at speed ${this.speed}`);
   }
 
   back() {
     this.both.ccw(this.speed);
-    this.currentMove = move.back;
+    this.currentMove = BACK;
+    this.areMoving = true;
     this.log.info(`wheels back at speed ${this.speed}`);
   }
 
   spinLeft() {
     this.left.ccw(this.speed);
     this.right.cw(this.speed);
-    this.currentMove = move.spinLeft;
+    this.currentMove = SPIN_LEFT;
+    this.areMoving = true;
     this.log.info(`wheels spin left at speed ${this.speed}`);
   }
 
   spinRight() {
     this.left.cw(this.speed);
     this.right.ccw(this.speed);
-    this.currentMove = move.spinRight;
+    this.currentMove = SPIN_RIGHT;
+    this.areMoving = true;
     this.log.info(`wheels spin right at speed ${this.speed}`);
   }
-
-  // forwardLeft
-
-  // forwardRight
-
-  // backLeft
-
-  // backRight
 };
 
 const createWheels = (leftWheelPin, rightWheelPin, log) => {
@@ -94,16 +90,16 @@ const createWheels = (leftWheelPin, rightWheelPin, log) => {
 
 const redoMove = (wheels) => {
   switch (wheels.currentMove) {
-    case move.forward:
+    case FORWARD:
       wheels.forward();
       break;
-    case move.back:
+    case BACK:
       wheels.back();
       break;
-    case move.spinLeft:
+    case SPIN_LEFT:
       wheels.spinLeft();
       break;
-    case move.spinRight:
+    case SPIN_RIGHT:
       wheels.spinRight();
       break;
   };
