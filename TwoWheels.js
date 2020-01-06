@@ -69,7 +69,7 @@ module.exports = class TwoWheels {
 };
 
 const createWheels = (leftWheelPin, rightWheelPin, log) => {
-  log.trace(`creating wheels left on ${leftWheelPin}, right on ${rightWheelPin}`);
+  log.debug(`creating wheels left on ${leftWheelPin}, right on ${rightWheelPin}`);
   
   const wheels = new Servos([{
       pin: leftWheelPin, 

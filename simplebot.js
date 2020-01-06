@@ -1,23 +1,24 @@
 const { Board, Led } = require('johnny-five');
 const { logLevels } = require('./SimpleLogLevels');
 const keypress = require('keypress');
-const SimpleLog = require('./SimpleLog');
+const simpleNodeLogger = require('simple-node-logger');
 const TwoWheels = require('./TwoWheels');
 
 const board = new Board({ repl: false });
-const log = new SimpleLog(logLevels.trace);
+const log = simpleNodeLogger.createSimpleLogger();
 
 let wheels;
 let led;
 
 board.on('ready', () => {
   try {
-    log.trace('on board ready');
-    
+    log.setLevel('debug');
+    log.debug('on board ready');
+
     wheels = new TwoWheels(9, 3, 0.2, log);
     led = new Led(11);
 
-    setLight(led, false);
+    setLight(false);
 
     registerBoardEventHandlers();
 
@@ -27,7 +28,6 @@ board.on('ready', () => {
 
     monitorKeyPressEvents(keyPressHandlers);
 
-    log.trace('after board.wait');
   } catch (error) {
     console.error('Error in board on ready handler');
     console.error(error);
@@ -36,28 +36,31 @@ board.on('ready', () => {
 
 const registerBoardEventHandlers = () => {
   board.on('exit', () => {
-    log.trace('on board exit');
-    cleanup(wheels, led);
+    log.debug('on board exit');
+    cleanup();
   });
 
-  log.trace('board exit handler registered');
+  log.debug('board exit handler registered');
 
   board.on('error', (err) => {
     log.error(JSON.stringify(err));
   });
 
-  log.trace('board error handler registered');
+  log.debug('board error handler registered');
 };
 
 const monitorKeyPressEvents = (handlers) => {
   keypress(process.stdin);
 
   process.stdin.on('keypress', (character, key) => {
-    if (key && key.ctrl && key.name === 'c') {
-      log.trace(`got keypress ^c`);
-      process.kill(process.pid, 'SIGINT');
+    if (key && key.ctrl) {
+      log.debug(`got CTRL+${character}`);
+      if (key.name === 'c') {
+        log.debug(`got keypress ^c`);
+        process.kill(process.pid, 'SIGINT');  
+      }
     } else {
-      log.trace(`got key press ${character}`);
+      log.debug(`got key press ${character}`);
       handlers.forEach(handler => {
         handler(character, key);
       });
@@ -71,7 +74,7 @@ const monitorKeyPressEvents = (handlers) => {
 const createDriveKeyPressHandler = () => {
   return (character, key) => {
 
-    log.trace(`drive handler received '${character}'`);
+    log.debug(`drive handler received '${character}'`);
 
     if (character === 'w') {
       wheels.forward();
@@ -91,23 +94,25 @@ const createDriveKeyPressHandler = () => {
       wheels.setSpeed(speed);
     }
 
-    setLight(led, wheels.areMoving);
+    setLight(wheels.areMoving);
   };
 }
 
-const setLight = (led, isMoving) => {
+const setLight = (isMoving) => {
+  /*
   if (isMoving) {
-    led.stop().off();
+    led.off();
     led.on();
-    log.trace('LED set to moving');
+    log.debug('LED set to moving');
   } else {
     led.pulse(800);
-    log.trace('LED set to stopped');
+    log.debug('LED set to stopped');
   }
+  */
 }
 
-const cleanup = (wheels, led) => {
-  log.trace('starting cleanup...');
+const cleanup = () => {
+  log.debug('starting cleanup...');
 
   if (wheels) {
     wheels.stop();
@@ -115,5 +120,5 @@ const cleanup = (wheels, led) => {
 
   led.stop().off();
 
-  log.trace('cleanup finished');
+  log.debug('cleanup finished');
 };
