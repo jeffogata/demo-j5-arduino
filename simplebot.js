@@ -1,8 +1,8 @@
 const { Board, Led } = require('johnny-five');
-const { logLevels } = require('./SimpleLogLevels');
 const keypress = require('keypress');
 const simpleNodeLogger = require('simple-node-logger');
 const TwoWheels = require('./TwoWheels');
+const keyboardDrive = require('./keyboardDrive');
 
 const board = new Board({ repl: false });
 const log = simpleNodeLogger.createSimpleLogger();
@@ -23,7 +23,7 @@ board.on('ready', () => {
     registerBoardEventHandlers();
 
     const keyPressHandlers = [
-      createDriveKeyPressHandler(),
+      keyboardDrive.handler(wheels, log),
     ];
 
     monitorKeyPressEvents(keyPressHandlers);
@@ -69,33 +69,6 @@ const monitorKeyPressEvents = (handlers) => {
 
   process.stdin.setRawMode(true);
   process.stdin.resume();
-}
-
-const createDriveKeyPressHandler = () => {
-  return (character, key) => {
-
-    log.debug(`drive handler received '${character}'`);
-
-    if (character === 'w') {
-      wheels.forward();
-    } else if (character === 'a') {
-      wheels.spinLeft();
-    } else if (character === 's') {
-      wheels.back();    
-    } else if (character === 'd') {
-      wheels.spinRight();
-    } else if (character === ' ') {
-      wheels.stop();
-    } else if (character >= '0' && character <= '9') {
-      let speed = parseInt(character) / 10;
-      if (speed === 0) {
-        speed = 1;
-      }
-      wheels.setSpeed(speed);
-    }
-
-    setLight(wheels.areMoving);
-  };
 }
 
 const setLight = (isMoving) => {
