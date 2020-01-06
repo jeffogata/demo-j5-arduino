@@ -7,7 +7,7 @@ const SPIN_LEFT = 3;
 const SPIN_RIGHT = 4;
 
 module.exports = class TwoWheels {
-  constructor(leftWheelPin, rightWheelPin, initialSpeed, log) {
+  constructor({ leftWheelPin, rightWheelPin, initialSpeed, log }) {
     this.log = log;
     this.setSpeed(initialSpeed);
     this.both = createWheels(leftWheelPin, rightWheelPin, this.log);

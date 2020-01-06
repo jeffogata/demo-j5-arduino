@@ -1,7 +1,7 @@
 const keypress = require('keypress');
 
 module.exports = class KeyboardController {
-  constructor(wheels, driveIndicator, log) {
+  constructor({ wheels, driveIndicator, log }) {
     wheels.stop();
 
     const driveHandler = createDriveHandler(wheels, driveIndicator, log);

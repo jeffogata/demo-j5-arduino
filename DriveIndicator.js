@@ -1,7 +1,7 @@
 const { Led } = require('johnny-five');
 
 module.exports = class DriveIndicator {
-  constructor(movingPin, stoppedPin, isMoving, log) {
+  constructor({ movingPin, stoppedPin, isMoving, log }) {
     this.log = log;
     this.movingLed = new Led(movingPin);
     this.stoppedLed = new Led(stoppedPin);
@@ -12,11 +12,11 @@ module.exports = class DriveIndicator {
       this.indicateStopped();
     }
 
-    log.debug(`drive indicator created, moving led on ${movingPin}, stopped led on ${stoppedPin}`);
+    log.debug(`drive indicator created, moving led on ${movingPin}, stopped led on ${stoppedPin}, isMoving :: ${isMoving}`);
   }
 
   indicateStopped() {
-    if (this.isMoving === true) {
+    if (this.isMoving !== false) {
       this.movingLed.off().stop();
       this.stoppedLed.on();
       this.isMoving = false;
@@ -25,7 +25,7 @@ module.exports = class DriveIndicator {
   }
 
   indicateMoving() {
-    if (this.isMoving === false) {
+    if (this.isMoving !== true) {
       this.movingLed.on();
       this.stoppedLed.off().stop();
       this.isMoving = true;

@@ -11,16 +11,35 @@ let wheels;
 let driveIndicator;
 let controller;
 
+// TODO: get level from command line args
+log.setLevel('debug');
+
 board.on('ready', () => {
   try {
-    log.setLevel('debug');
     log.debug('on board ready');
 
     registerBoardEventHandlers();
 
-    driveIndicator = new DriveIndicator(10, 11, false, log);
-    wheels = new TwoWheels(9, 3, 0.2, log);
-    controller = new KeyboardController(wheels, driveIndicator, log);
+    wheels = new TwoWheels({
+      leftWheelPin: 9,
+      rightWheelPin: 3,
+      initialSpeed: 0.2,
+      log
+    });
+
+    driveIndicator = new DriveIndicator({
+      movingPin: 10,
+      stoppedPin: 11,
+      isMoving: false, 
+      log
+    });
+
+    controller = new KeyboardController({
+      wheels,
+      driveIndicator,
+      log
+    });
+
   } catch (error) {
     console.error('Error in board on ready handler');
     console.error(error);
