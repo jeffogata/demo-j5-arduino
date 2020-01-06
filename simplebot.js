@@ -1,33 +1,26 @@
-const { Board, Led } = require('johnny-five');
-const keypress = require('keypress');
+const { Board } = require('johnny-five');
 const simpleNodeLogger = require('simple-node-logger');
 const TwoWheels = require('./TwoWheels');
-const keyboardDrive = require('./keyboardDrive');
+const DriveIndicator = require('./DriveIndicator');
+const KeyboardController = require('./KeyboardController');
 
 const board = new Board({ repl: false });
 const log = simpleNodeLogger.createSimpleLogger();
 
 let wheels;
-let led;
+let driveIndicator;
+let controller;
 
 board.on('ready', () => {
   try {
     log.setLevel('debug');
     log.debug('on board ready');
 
-    wheels = new TwoWheels(9, 3, 0.2, log);
-    led = new Led(11);
-
-    setLight(false);
-
     registerBoardEventHandlers();
 
-    const keyPressHandlers = [
-      keyboardDrive.handler(wheels, log),
-    ];
-
-    monitorKeyPressEvents(keyPressHandlers);
-
+    driveIndicator = new DriveIndicator(10, 11, false, log);
+    wheels = new TwoWheels(9, 3, 0.2, log);
+    controller = new KeyboardController(wheels, driveIndicator, log);
   } catch (error) {
     console.error('Error in board on ready handler');
     console.error(error);
@@ -49,41 +42,6 @@ const registerBoardEventHandlers = () => {
   log.debug('board error handler registered');
 };
 
-const monitorKeyPressEvents = (handlers) => {
-  keypress(process.stdin);
-
-  process.stdin.on('keypress', (character, key) => {
-    if (key && key.ctrl) {
-      log.debug(`got CTRL+${character}`);
-      if (key.name === 'c') {
-        log.debug(`got keypress ^c`);
-        process.kill(process.pid, 'SIGINT');  
-      }
-    } else {
-      log.debug(`got key press ${character}`);
-      handlers.forEach(handler => {
-        handler(character, key);
-      });
-    }
-  });
-
-  process.stdin.setRawMode(true);
-  process.stdin.resume();
-}
-
-const setLight = (isMoving) => {
-  /*
-  if (isMoving) {
-    led.off();
-    led.on();
-    log.debug('LED set to moving');
-  } else {
-    led.pulse(800);
-    log.debug('LED set to stopped');
-  }
-  */
-}
-
 const cleanup = () => {
   log.debug('starting cleanup...');
 
@@ -91,7 +49,9 @@ const cleanup = () => {
     wheels.stop();
   }
 
-  led.stop().off();
-
+  if (driveIndicator) {
+    driveIndicator.cleanup();
+  }
+  
   log.debug('cleanup finished');
 };
